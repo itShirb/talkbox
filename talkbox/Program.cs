@@ -15,7 +15,8 @@ namespace talkbox
 		private DiscordSocketClient _client;
 		private CommandHandler _command;
 		private CommandService _service;
-		public async Task MainAsync()
+
+		private async Task MainAsync()
 		{
 			var config = new DiscordSocketConfig{ MessageCacheSize = 100 };
 			_client = new DiscordSocketClient(config);
