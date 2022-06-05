@@ -105,6 +105,7 @@
     <ItemGroup>
         <Compile Include="CommandHandler.cs" />
         <Compile Include="EchoModule.cs" />
+        <Compile Include="HelpModule.cs" />
         <Compile Include="Program.cs" />
         <Compile Include="Properties\AssemblyInfo.cs" />
     </ItemGroup>
