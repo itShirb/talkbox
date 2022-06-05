@@ -42,7 +42,7 @@ namespace talkbox
 				{
 					var embedFieldText = cmd.Summary ?? "No description provided";
 					_embedBuilder.Title = cmd.Name;
-					_embedBuilder.Description = cmd.Summary+$"\nUsage: {Program.prefix}";
+					_embedBuilder.Description = cmd.Summary+$"\nUsage: {Program.prefix}{cmd.Name} ";
 					foreach (var param in cmd.Parameters)
 					{
 						_embedBuilder.Description += param.Summary + " ";
