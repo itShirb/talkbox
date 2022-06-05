@@ -9,7 +9,7 @@ namespace talkbox
 		[Command("connect", RunMode = RunMode.Async)]
 		[Summary("Connect bot to voice channel")]
 		[Alias("c")]
-		public async Task ConnectAsync([Remainder] [Summary("<voice_channel>")] IVoiceChannel channel = null)
+		public async Task ConnectAsync([Remainder] [Summary("<voice_channel>")] IVoiceChannel? channel = null)
 		{
 			channel = channel ?? (Context.User as IGuildUser)?.VoiceChannel;
 			if (channel is null)

@@ -23,6 +23,23 @@ namespace talkbox
 			await Commands.AddModulesAsync(assembly: Assembly.GetEntryAssembly(), services: null);
 		}
 
+		public static Task<string> ReturnCommandUsage(string commandName)
+		{
+			CommandInfo? cmd = null;
+			foreach (var c in CommandHandler.Commands.Commands)
+			{
+				if (c.Name == commandName) cmd = c;
+			}
+			if (cmd is null) return Task.FromResult("Command could not be found for some reason");
+			var par = "";
+			foreach (var param in cmd.Parameters)
+			{
+				par += param.Summary+" ";
+			}
+
+			return Task.FromResult($"Command Usage: {Program.prefix}{cmd.Name} {par}");
+		}
+
 		private async Task HandleCommandAsync(SocketMessage messageParam)
 		{
 			if (messageParam is not SocketUserMessage message) return;

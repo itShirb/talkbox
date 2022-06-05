@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
+using System.Data.SQLite;
 
 namespace talkbox
 {
@@ -44,6 +45,5 @@ namespace talkbox
 			Console.WriteLine(msg.ToString());
 			return Task.CompletedTask;
 		}
-
 	}
 }
