@@ -4,7 +4,6 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
-using System.Data.SQLite;
 
 namespace talkbox
 {
@@ -18,8 +17,6 @@ namespace talkbox
 		private CommandService _service;
 		public async Task MainAsync()
 		{
-			// invite link https://discord.com/api/oauth2/authorize?client_id=981761039181942824&permissions=2213624128&scope=bot
-
 			var config = new DiscordSocketConfig{ MessageCacheSize = 100 };
 			_client = new DiscordSocketClient(config);
 			_service = new CommandService();
