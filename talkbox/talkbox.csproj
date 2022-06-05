@@ -104,6 +104,7 @@
     </ItemGroup>
     <ItemGroup>
         <Compile Include="CommandHandler.cs" />
+        <Compile Include="ConnectModule.cs" />
         <Compile Include="EchoModule.cs" />
         <Compile Include="HelpModule.cs" />
         <Compile Include="Program.cs" />

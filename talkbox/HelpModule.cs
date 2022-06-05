@@ -1,3 +1,4 @@
+#nullable enable
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -13,7 +14,7 @@ namespace talkbox
 		[Command("help")]
 		[Summary("Provides command usage and information")]
 		[Alias("h")]
-		public async Task HelpAsync([Remainder] [Summary("[command]")] string command = null)
+		public async Task HelpAsync([Remainder] [Summary("[command]")] string? command = null)
 		{
 			_embedBuilder.Color = new Color((byte)87, (byte)14, (byte)156);
 			if (command is null)
