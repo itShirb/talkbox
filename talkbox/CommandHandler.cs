@@ -25,7 +25,7 @@ namespace talkbox
 
 		public static Task<string> ReturnCommandUsage(string commandName)
 		{
-			CommandInfo? cmd = null;
+			CommandInfo cmd = null;
 			foreach (var c in CommandHandler.Commands.Commands)
 			{
 				if (c.Name == commandName) cmd = c;

@@ -1,5 +1,7 @@
+#nullable enable
 using System.Threading.Tasks;
 using Discord;
+using Discord.Audio;
 using Discord.Commands;
 
 namespace talkbox
@@ -18,7 +20,25 @@ namespace talkbox
 				return;
 			}
 
-			var audioClient = await channel.ConnectAsync();
+			IAudioClient? audioClient = null;
+			try
+			{
+				audioClient = await channel.ConnectAsync();
+			}
+			catch
+			{
+				await ReplyAsync("Unable to connect to channel.");
+			}
+
+			if (audioClient is not null)
+			{
+				if (audioClient.ConnectionState == ConnectionState.Connecting)
+					await ReplyAsync("Attempting to connect...");
+				if (audioClient.ConnectionState == ConnectionState.Connected)
+				{
+					await ReplyAsync("Connected to channel.");
+				}
+			}
 		}
 	}
 }

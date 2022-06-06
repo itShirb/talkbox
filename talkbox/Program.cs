@@ -4,17 +4,22 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
+using MongoDB.Bson;
+using MongoDB.Driver;
 
 namespace talkbox
 {
 	internal class Program
 	{
 		public static Task Main(string[] args) => new Program().MainAsync();
-		public static string prefix = "tb$";
+		public static string prefix;
 
 		private DiscordSocketClient _client;
 		private CommandHandler _command;
 		private CommandService _service;
+		public static MongoClient MClient;
+		public static IMongoDatabase MDatabase;
+		public static IMongoCollection<BsonDocument> ServerData;
 
 		private async Task MainAsync()
 		{
@@ -22,6 +27,8 @@ namespace talkbox
 			_client = new DiscordSocketClient(config);
 			_service = new CommandService();
 			_command = new CommandHandler(_client, _service);
+			MClient = new MongoClient("mongodb+srv://shirb:VtMoH1J9FnT4DL8h@talkbox.gquw3fu.mongodb.net/test");
+			MDatabase = MClient.GetDatabase("talkbox");
 			await _command.InstallCommandsAsync();
 			_client.Log += Log;
 
@@ -29,7 +36,7 @@ namespace talkbox
 			
 			await _client.LoginAsync(TokenType.Bot, token);
 			await _client.StartAsync();
-
+			
 			_client.Ready += () =>
 			{
 				Console.WriteLine("talkbox is now online.");
