@@ -37,14 +37,15 @@ namespace talkbox
 				par += param.Summary+" ";
 			}
 
-			return Task.FromResult($"Command Usage: {Program.prefix}{cmd.Name} {par}");
+			return Task.FromResult($"Command Usage: {Program.DefaultPrefix}{cmd.Name} {par}");
 		}
 
 		private async Task HandleCommandAsync(SocketMessage messageParam)
 		{
 			if (messageParam is not SocketUserMessage message) return;
 			var argPos = 0;
-			if (!(message.HasStringPrefix(Program.prefix, ref argPos) ||
+			
+			if (!(message.HasStringPrefix(Program.DefaultPrefix, ref argPos) ||
 			      message.HasMentionPrefix(_client.CurrentUser, ref argPos)) || message.Author.IsBot) return;
 			var context = new SocketCommandContext(_client, message);
 			await Commands.ExecuteAsync(
