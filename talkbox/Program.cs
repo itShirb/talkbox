@@ -4,10 +4,6 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
-using System.Data.Sql;
-// using System.Data.SqlClient;
-using MongoDB.Bson;
-using MongoDB.Driver;
 using MySql.Data.MySqlClient;
 
 namespace talkbox
@@ -19,12 +15,6 @@ namespace talkbox
 		private DiscordSocketClient _client;
 		private CommandHandler _command;
 		private CommandService _service;
-		// private static SqlConnectionStringBuilder _sqlBuilder;
-		// public static SqlConnection SqlCon;
-		
-		// public static MongoClient MClient;
-		// public static IMongoDatabase MDatabase;
-		// public static IMongoCollection<BsonDocument> ServerData;
 
 		public static MySqlConnection SqlCon;
 		
@@ -34,8 +24,6 @@ namespace talkbox
 			_client = new DiscordSocketClient(config);
 			_service = new CommandService();
 			_command = new CommandHandler(_client, _service);
-			// MClient = new MongoClient("mongodb+srv://shirb:VtMoH1J9FnT4DL8h@talkbox.gquw3fu.mongodb.net/test");
-			// MDatabase = MClient.GetDatabase("talkbox");
 			await _command.InstallCommandsAsync();
 			_client.Log += Log;
 			
@@ -54,26 +42,6 @@ namespace talkbox
 			{
 				Console.WriteLine(err);
 			}
-			// _sqlBuilder = new SqlConnectionStringBuilder
-			// {
-			// 	UserID = uname,
-			// 	Password = passwd,
-			// 	["Server"] = "localhost"
-			// };
-			// Console.WriteLine(_sqlBuilder.ConnectionString);
-			//
-			// using (SqlCon = new SqlConnection(_sqlBuilder.ConnectionString))
-			// {
-			// 	try
-			// 	{
-			// 		SqlCon.Open();
-			// 		Console.WriteLine("Connected to database");
-			// 	}
-			// 	catch (SqlException err)
-			// 	{
-			// 		Console.WriteLine(err);
-			// 	}
-			// }
 
 			await _client.LoginAsync(TokenType.Bot, token);
 			await _client.StartAsync();
