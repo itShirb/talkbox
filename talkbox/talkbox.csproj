@@ -257,11 +257,14 @@
     <ItemGroup>
         <Compile Include="CommandHandler.cs" />
         <Compile Include="ConnectModule.cs" />
+        <Compile Include="DbHandler.cs" />
+        <Compile Include="DisconnectModule.cs" />
         <Compile Include="EchoModule.cs" />
         <Compile Include="HelpModule.cs" />
         <Compile Include="PingModule.cs" />
         <Compile Include="Program.cs" />
         <Compile Include="Properties\AssemblyInfo.cs" />
+        <Compile Include="RemovePrefixModule.cs" />
         <Compile Include="SetPrefixModule.cs" />
         <Compile Include="Unused\DatabaseTestModule.cs" />
     </ItemGroup>

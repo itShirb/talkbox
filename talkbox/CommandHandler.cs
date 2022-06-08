@@ -1,6 +1,7 @@
 using System;
 using System.Reflection;
 using System.Threading.Tasks;
+using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
 
@@ -40,13 +41,22 @@ namespace talkbox
 			return Task.FromResult($"Command Usage: {Program.DefaultPrefix}{cmd.Name} {par}");
 		}
 
+		private string GetCustomPrefix(SocketUserMessage msg)
+		{
+			SocketGuild guild;
+			guild = msg.Channel is SocketGuildChannel channel ? channel.Guild : (SocketGuild)null;
+			if (guild is not null) return (string)DbHandler.CheckExists(1, "guild_prefix","guild_data", "guild_id", guild.Id);
+			return null;
+		}
+		
 		private async Task HandleCommandAsync(SocketMessage messageParam)
 		{
 			if (messageParam is not SocketUserMessage message) return;
 			var argPos = 0;
 			
 			if (!(message.HasStringPrefix(Program.DefaultPrefix, ref argPos) ||
-			      message.HasMentionPrefix(_client.CurrentUser, ref argPos)) || message.Author.IsBot) return;
+			      message.HasMentionPrefix(_client.CurrentUser, ref argPos) ||
+			      (GetCustomPrefix(message) is not null && message.HasStringPrefix(GetCustomPrefix(message), ref argPos))) || message.Author.IsBot) return;
 			var context = new SocketCommandContext(_client, message);
 			await Commands.ExecuteAsync(
 				context: context,

@@ -33,6 +33,11 @@ namespace talkbox
 				foreach (var c in commands)
 				{
 					if (c.Name == command) cmd = c;
+					else
+						foreach (var alias in c.Aliases)
+						{
+							if (alias == command) cmd = c;
+						}
 				}
 				if (cmd is null)
 				{
