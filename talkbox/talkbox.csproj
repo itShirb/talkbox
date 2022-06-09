@@ -3,7 +3,6 @@
     <PropertyGroup>
         <OutputType>Exe</OutputType>
         <TargetFramework>net6.0</TargetFramework>
-        <RootNamespace>talkbox_dotnetcore</RootNamespace>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
     </PropertyGroup>
@@ -16,6 +15,7 @@
       <PackageReference Include="Discord.Net.Webhook" Version="3.7.2" />
       <PackageReference Include="Discord.Net.WebSocket" Version="3.7.2" />
       <PackageReference Include="MySql.Data" Version="8.0.29" />
+      <PackageReference Include="Victoria" Version="5.2.8" />
     </ItemGroup>
 
 </Project>
