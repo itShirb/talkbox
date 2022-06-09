@@ -1,7 +1,4 @@
-﻿using System;
-using System.IO;
-using System.Threading.Tasks;
-using Discord;
+﻿using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
@@ -15,7 +12,8 @@ internal class Program
 	public const string DefaultPrefix = "tb$";
 	private DiscordSocketClient _client = null!;
 	private CommandHandler _command = null!;
-	private CommandService _service = null!;
+	private CommandService _commandService = null!;
+	private IServiceProvider? _services;
 
 	public static MySqlConnection SqlCon = null!;
 		
@@ -23,8 +21,9 @@ internal class Program
 	{
 		var config = new DiscordSocketConfig{ MessageCacheSize = 100 };
 		_client = new DiscordSocketClient(config);
-		_service = new CommandService();
-		_command = new CommandHandler(_client, _service);
+		_commandService = new CommandService();
+		_services = ConfigureServices();
+		_command = new CommandHandler(_client, _commandService, _services);
 		await _command.InstallCommandsAsync();
 		_client.Log += Log;
 			
@@ -46,6 +45,7 @@ internal class Program
 
 		await _client.LoginAsync(TokenType.Bot, token);
 		await _client.StartAsync();
+		await _client.SetGameAsync("tb$help");
 			
 		_client.Ready += () =>
 		{
@@ -55,7 +55,13 @@ internal class Program
 		await Task.Delay(-1);
 	}
 
-	private Task Log(LogMessage msg)
+	private static IServiceProvider ConfigureServices()
+	{
+		var map = new ServiceCollection()
+			.AddSingleton(new AudioService());
+		return map.BuildServiceProvider();
+	}
+	private static Task Log(LogMessage msg)
 	{
 		Console.WriteLine(msg.ToString());
 		return Task.CompletedTask;

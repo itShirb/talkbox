@@ -1,7 +1,4 @@
-using System;
 using System.Reflection;
-using System.Threading.Tasks;
-using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
 
@@ -12,16 +9,18 @@ public class CommandHandler
 	private readonly DiscordSocketClient _client;
 	public static CommandService Commands = null!;
 
-	public CommandHandler(DiscordSocketClient client, CommandService commands)
+	private readonly IServiceProvider? _services;
+	public CommandHandler(DiscordSocketClient client, CommandService commands, IServiceProvider? services)
 	{
 		_client = client;
 		CommandHandler.Commands = commands;
+		_services = services;
 	}
 
 	public async Task InstallCommandsAsync()
 	{
 		_client.MessageReceived += HandleCommandAsync;
-		await Commands.AddModulesAsync(assembly: Assembly.GetEntryAssembly(), services: null);
+		await Commands.AddModulesAsync(assembly: Assembly.GetEntryAssembly(), services: _services);
 	}
 
 	public static Task<string> ReturnCommandUsage(string commandName)
@@ -61,6 +60,6 @@ public class CommandHandler
 		await Commands.ExecuteAsync(
 			context: context,
 			argPos: argPos,
-			services: null);
+			services: _services);
 	}
 }

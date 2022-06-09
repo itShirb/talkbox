@@ -1,7 +1,4 @@
 #nullable enable
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
 
@@ -45,13 +42,22 @@ public class HelpModule : ModuleBase<SocketCommandContext>
 			}
 			else
 			{
-				var embedFieldText = cmd.Summary ?? "No description provided";
 				_embedBuilder.Title = cmd.Name;
-				_embedBuilder.Description = cmd.Summary+$"\nUsage: {Program.DefaultPrefix}{cmd.Name} ";
+				_embedBuilder.Description = $"Description: `{cmd.Summary}`";
+				_embedBuilder.Description += "\nAliases: `";
+				foreach (var alias in cmd.Aliases)
+				{
+					if (alias == cmd.Name) continue;
+					_embedBuilder.Description += alias+" ";
+				}
+				_embedBuilder.Description = _embedBuilder.Description.TrimEnd();
+				_embedBuilder.Description += $"`\nUsage: `{Program.DefaultPrefix}{cmd.Name} ";
 				foreach (var param in cmd.Parameters)
 				{
 					_embedBuilder.Description += param.Summary + " ";
 				}
+				_embedBuilder.Description = _embedBuilder.Description.TrimEnd();
+				_embedBuilder.Description += "`";
 				await ReplyAsync("Command info:", false, _embedBuilder.Build());
 			}
 		}
