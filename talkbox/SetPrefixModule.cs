@@ -41,7 +41,7 @@ namespace talkbox
 				return;
 			}
 
-			if (!(bool)DbHandler.CheckExists(0, "guild_id","guild_data", "guild_id", Context.Guild.Id))
+			if (!(bool)(DbHandler.CheckExists(0, "guild_id","guild_data", "guild_id", Context.Guild.Id) ?? throw new InvalidOperationException()))
 			{
 				using var dbInsert = new MySqlCommand($"INSERT guild_data SET guild_id={Context.Guild.Id}");
 				dbInsert.Connection = Program.SqlCon;

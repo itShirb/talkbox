@@ -14,8 +14,8 @@ namespace talkbox
 		[Alias("rp")]
 		public async Task RemovePrefixAsync()
 		{
-			if (!(bool)DbHandler.CheckExists(0, "guild_id", "guild_data", "guild_id", Context.Guild.Id) ||
-			    (string)DbHandler.CheckExists(1, "guild_prefix", "guild_data", "guild_id", Context.Guild.Id) is null)
+			if (!(bool)(DbHandler.CheckExists(0, "guild_id", "guild_data", "guild_id", Context.Guild.Id) ?? throw new InvalidOperationException()) ||
+			    (string)DbHandler.CheckExists(1, "guild_prefix", "guild_data", "guild_id", Context.Guild.Id)! is null)
 			{
 				await ReplyAsync("There is no custom prefix set.");
 				return;

@@ -10,7 +10,7 @@ namespace talkbox
 	public class CommandHandler
 	{
 		private readonly DiscordSocketClient _client;
-		public static CommandService Commands;
+		public static CommandService Commands = null!;
 
 		public CommandHandler(DiscordSocketClient client, CommandService commands)
 		{
@@ -26,7 +26,7 @@ namespace talkbox
 
 		public static Task<string> ReturnCommandUsage(string commandName)
 		{
-			CommandInfo cmd = null;
+			CommandInfo? cmd = null;
 			foreach (var c in CommandHandler.Commands.Commands)
 			{
 				if (c.Name == commandName) cmd = c;
@@ -41,11 +41,11 @@ namespace talkbox
 			return Task.FromResult($"Command Usage: {Program.DefaultPrefix}{cmd.Name} {par}");
 		}
 
-		private string GetCustomPrefix(SocketUserMessage msg)
+		private string? GetCustomPrefix(SocketUserMessage msg)
 		{
-			SocketGuild guild;
-			guild = msg.Channel is SocketGuildChannel channel ? channel.Guild : (SocketGuild)null;
-			if (guild is not null) return (string)DbHandler.CheckExists(1, "guild_prefix","guild_data", "guild_id", guild.Id);
+			SocketGuild? guild;
+			guild = msg.Channel is SocketGuildChannel channel ? channel.Guild : null;
+			if (guild is not null) return (string)DbHandler.CheckExists(1, "guild_prefix","guild_data", "guild_id", guild.Id)!;
 			return null;
 		}
 		

@@ -9,7 +9,7 @@ namespace talkbox
 		[Command("disconnect")]
 		[Summary("Disconnects bot from whatever voice channel it's in.")]
 		[Alias("dc")]
-		public async Task DisconnectAsync([Remainder][Summary("[channel]")] IVoiceChannel channel = null)
+		public async Task DisconnectAsync([Remainder][Summary("[channel]")] IVoiceChannel? channel = null)
 		{
 			channel = channel ?? (Context.User as IGuildUser)?.VoiceChannel;
 			if (channel == null)

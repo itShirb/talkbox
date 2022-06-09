@@ -12,11 +12,11 @@ namespace talkbox
 	{
 		public static Task Main(string[] args) => new Program().MainAsync();
 		public const string DefaultPrefix = "tb$";
-		private DiscordSocketClient _client;
-		private CommandHandler _command;
-		private CommandService _service;
+		private DiscordSocketClient _client = null!;
+		private CommandHandler _command = null!;
+		private CommandService _service = null!;
 
-		public static MySqlConnection SqlCon;
+		public static MySqlConnection SqlCon = null!;
 		
 		private async Task MainAsync()
 		{
