@@ -3,6 +3,7 @@ using Discord.Commands;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
 using MySql.Data.MySqlClient;
+using Victoria;
 
 namespace talkbox;
 
@@ -19,6 +20,7 @@ internal class Program
 		
 	private async Task MainAsync()
 	{
+		TextToSpeech.GetVoiceList();
 		var config = new DiscordSocketConfig{ MessageCacheSize = 100 };
 		_client = new DiscordSocketClient(config);
 		_commandService = new CommandService();
@@ -58,7 +60,8 @@ internal class Program
 	private static IServiceProvider ConfigureServices()
 	{
 		var map = new ServiceCollection()
-			.AddSingleton(new AudioService());
+			.AddSingleton(new AudioService())
+			.AddLavaNode();
 		return map.BuildServiceProvider();
 	}
 	private static Task Log(LogMessage msg)
