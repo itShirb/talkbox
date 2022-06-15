@@ -28,10 +28,22 @@ internal class Program
 		_command = new CommandHandler(_client, _commandService, _services);
 		await _command.InstallCommandsAsync();
 		_client.Log += Log;
-			
-		var token = File.ReadAllText("token.txt");
-		var passwd = File.ReadAllText("passwd");
-		var uname = File.ReadAllText("uname");
+		
+		string token = "";
+		string passwd = "";
+		string uname = "";
+		try{
+			token = File.ReadAllText("token.txt");
+			passwd = File.ReadAllText("passwd");
+			uname = File.ReadAllText("uname");
+		}catch{
+			token = File.ReadAllText("bin/Debug/net6.0/token.txt");
+			passwd = File.ReadAllText("bin/Debug/net6.0/passwd");
+			uname = File.ReadAllText("bin/Debug/net6.0/uname");
+		}
+		//var token = File.ReadAllText("token.txt");
+		//var passwd = File.ReadAllText("passwd");
+		//var uname = File.ReadAllText("uname");
 		var conStr = $"server=localhost;uid={uname};pwd={passwd};database=talkbox";
 		SqlCon = new MySqlConnection();
 		try

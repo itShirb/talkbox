@@ -56,14 +56,17 @@ public class AudioService
 		if (_connectedChannels.TryGetValue(guild.Id, out var client))
 		{
 			using var ffmpeg = CreateProcess(path);
-			await using var stream = client.CreatePCMStream(AudioApplication.Music);
-			try
+			if (client != null)
 			{
-				await ffmpeg.StandardOutput.BaseStream.CopyToAsync(stream);
-			}
-			finally
-			{
-				await stream.FlushAsync();
+				await using var stream = client.CreatePCMStream(AudioApplication.Music);
+				try
+				{
+					await ffmpeg.StandardOutput.BaseStream.CopyToAsync(stream);
+				}
+				finally
+				{
+					await stream.FlushAsync();
+				}
 			}
 		}
 	}
