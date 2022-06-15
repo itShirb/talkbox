@@ -1,11 +1,8 @@
-using System.Net;
 using Discord;
 using Discord.Audio;
 using Discord.Commands;
-using Microsoft.Extensions.DependencyInjection;
 using MySql.Data.MySqlClient;
 using Newtonsoft.Json.Linq;
-using Victoria;
 
 namespace talkbox;
 
