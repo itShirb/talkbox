@@ -3,7 +3,6 @@ using System.Diagnostics;
 using Discord;
 using Discord.Audio;
 using Discord.Commands;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace talkbox;
 
@@ -52,21 +51,22 @@ public class AudioService
 			await channel.SendMessageAsync("Failed to retrieve tts link.");
 			return;
 		}
-
+		
 		if (_connectedChannels.TryGetValue(guild.Id, out var client))
 		{
 			using var ffmpeg = CreateProcess(path);
 			if (client != null)
 			{
-				await using var stream = client.CreatePCMStream(AudioApplication.Music);
+				await using var stream = client.CreatePCMStream(AudioApplication.Mixed);
 				try
 				{
 					await ffmpeg.StandardOutput.BaseStream.CopyToAsync(stream);
 				}
-				finally
+				catch (Exception e)
 				{
-					await stream.FlushAsync();
+					await channel.SendMessageAsync(e.ToString());
 				}
+				await stream.FlushAsync();
 			}
 		}
 	}

@@ -179,7 +179,7 @@ public class AudioModule : ModuleBase<SocketCommandContext>
 				$"To set a voice, run `{Program.DefaultPrefix}setvoice [voice]`.");
 			return;
 		}
-		var response = await TextToSpeech.ApiRequest(Context, text);
+		using var response = await TextToSpeech.ApiRequest(Context, text);
 		if (response is null) return;
 		var parsedResponse = JObject.Parse(response.ReadAsStringAsync().Result);
 		var speakUrl = "";
@@ -187,8 +187,7 @@ public class AudioModule : ModuleBase<SocketCommandContext>
 		{
 			if (entry.Key == "speak_url"&&entry.Value is not null) speakUrl = (string)entry.Value!;
 		}
-
+		Console.WriteLine(speakUrl);
 		await _audioService.SendAudioAsync(Context.Guild, Context.Channel, speakUrl);
-
 	}
 }
