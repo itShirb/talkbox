@@ -1,0 +1,61 @@
+using System.Reflection;
+
+namespace talkbox;
+
+public class CommandHandler
+{
+
+	private readonly IServiceProvider? _services;
+	public CommandHandler(DiscordSocketClient client, CommandService commands, IServiceProvider? services)
+	{
+		_client = client;
+		CommandHandler.Commands = commands;
+		_services = services;
+	}
+
+	public async Task InstallCommandsAsync()
+	{
+		_client.MessageReceived += HandleCommandAsync;
+		await Commands.AddModulesAsync(assembly: Assembly.GetEntryAssembly(), services: _services);
+	}
+
+	public static Task<string> ReturnCommandUsage(string commandName)
+	{
+		CommandInfo? cmd = null;
+		foreach (var c in CommandHandler.Commands.Commands)
+		{
+			if (c.Name == commandName) cmd = c;
+		}
+		if (cmd is null) return Task.FromResult("Command could not be found for some reason");
+		var par = "";
+		foreach (var param in cmd.Parameters)
+		{
+			par += param.Summary+" ";
+		}
+
+		return Task.FromResult($"Command Usage: {Program.defaultPrefix}{cmd.Name} {par}");
+	}
+
+	private string? GetCustomPrefix(SocketUserMessage msg)
+	{
+		SocketGuild? guild;
+		guild = msg.Channel is SocketGuildChannel channel ? channel.Guild : null;
+		if (guild is not null) return (string)Database.CheckExists(1, "guild_prefix","guild_data", "guild_id", guild.Id)!;
+		return null;
+	}
+		
+	private async Task HandleCommandAsync(SocketMessage messageParam)
+	{
+		if (messageParam is not SocketUserMessage message) return;
+		var argPos = 0;
+			
+		if (!(message.HasStringPrefix(Program.defaultPrefix, ref argPos) ||
+		      message.HasMentionPrefix(_client.CurrentUser, ref argPos) ||
+		      (GetCustomPrefix(message) is not null && message.HasStringPrefix(GetCustomPrefix(message), ref argPos))) || message.Author.IsBot) return;
+		var context = new SocketCommandContext(_client, message);
+		await Commands.ExecuteAsync(
+			context: context,
+			argPos: argPos,
+			services: _services);
+	}
+}

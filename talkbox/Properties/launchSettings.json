@@ -4,7 +4,8 @@
       "commandName": "Project",
       "environmentVariables": {
         "TB_DB_USER": "root",
-        "TB_DB_PASS": "password"
+        "TB_DB_PASS": "password",
+        "TB_TOKEN": "OTgxNzYxMDM5MTgxOTQyODI0.GfsjiG.jXfqXD-8q_dE4A5MO3U3bz0xndACjl0geLHZe8"
       }
     }
   }

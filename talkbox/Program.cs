@@ -1,34 +1,22 @@
-﻿using Discord;
-using Discord.Commands;
-using Discord.WebSocket;
+﻿using DSharpPlus;
+using DSharpPlus.CommandsNext;
+using DSharpPlus.Lavalink;
 using Microsoft.Extensions.DependencyInjection;
 using MySql.Data.MySqlClient;
-using Victoria;
 
 namespace talkbox;
 
 internal class Program
 {
 	public static Task Main(string[] args) => new Program().MainAsync();
-	public const string DefaultPrefix = "tb$";
-	private DiscordSocketClient _client = null!;
-	private CommandHandler _command = null!;
-	private CommandService _commandService = null!;
-	private IServiceProvider? _services;
+	public const string defaultPrefix = "tb$";
+	private DiscordClient client = null!;
 
-	public static MySqlConnection SqlCon = null!;
-		
+	public static MySqlConnection sqlConnection = null!;
+	public static Database db;
+	
 	private async Task MainAsync()
 	{
-		TextToSpeech.GetVoiceList();
-		var config = new DiscordSocketConfig{ MessageCacheSize = 100 };
-		_client = new DiscordSocketClient(config);
-		_commandService = new CommandService();
-		_services = ConfigureServices();
-		_command = new CommandHandler(_client, _commandService, _services);
-		await _command.InstallCommandsAsync();
-		_client.Log += Log;
-		
 		// collect credentials from environment
 		string? token = Environment.GetEnvironmentVariable("TB_TOKEN");
 		string? dbServer = Environment.GetEnvironmentVariable("TB_DB_SERVER");
@@ -60,40 +48,35 @@ internal class Program
 		}
 
 		var conStr = $"server={dbServer};uid={dbUser};pwd={dbPass};database={dbName}";
-		SqlCon = new MySqlConnection();
+		sqlConnection = new MySqlConnection();
 		try
 		{
-			SqlCon.ConnectionString = conStr;
-			SqlCon.Open();
+			sqlConnection.ConnectionString = conStr;
+			sqlConnection.Open();
 			Console.WriteLine("Connected to database");
 		}
 		catch (MySqlException err)
 		{
 			Console.WriteLine(err);
 		}
+		db = new Database(sqlConnection);
 
-		await _client.LoginAsync(TokenType.Bot, token);
-		await _client.StartAsync();
-		await _client.SetGameAsync("tb$help");
-			
-		_client.Ready += () =>
+		client = new DiscordClient(new DiscordConfiguration()
 		{
-			Console.WriteLine("talkbox is now online.");
-			return Task.CompletedTask;
-		};
-		await Task.Delay(-1);
-	}
+			Token = token,
+			TokenType = TokenType.Bot,
+			Intents = DiscordIntents.AllUnprivileged
+		});
 
-	private static IServiceProvider ConfigureServices()
-	{
-		var map = new ServiceCollection()
-			.AddSingleton(new AudioService())
-			.AddLavaNode();
-		return map.BuildServiceProvider();
-	}
-	private static Task Log(LogMessage msg)
-	{
-		Console.WriteLine(msg.ToString());
-		return Task.CompletedTask;
+		LavalinkExtension lava = client.UseLavalink();
+
+		CommandsNextExtension commands = client.UseCommandsNext(new CommandsNextConfiguration()
+        {
+			StringPrefixes = new[] { defaultPrefix }
+        });
+		commands.RegisterCommands<AudioModule>();
+		
+		await client.ConnectAsync();
+		await Task.Delay(-1);
 	}
 }
