@@ -29,22 +29,37 @@ internal class Program
 		await _command.InstallCommandsAsync();
 		_client.Log += Log;
 		
-		string token = "";
-		string passwd = "";
-		string uname = "";
-		try{
-			token = File.ReadAllText("token.txt");
-			passwd = File.ReadAllText("passwd");
-			uname = File.ReadAllText("uname");
-		}catch{
-			token = File.ReadAllText("bin/Debug/net6.0/token.txt");
-			passwd = File.ReadAllText("bin/Debug/net6.0/passwd");
-			uname = File.ReadAllText("bin/Debug/net6.0/uname");
+		// collect credentials from environment
+		string? token = Environment.GetEnvironmentVariable("TB_TOKEN");
+		string? dbServer = Environment.GetEnvironmentVariable("TB_DB_SERVER");
+		string? dbUser = Environment.GetEnvironmentVariable("TB_DB_USER");
+		string? dbPass = Environment.GetEnvironmentVariable("TB_DB_PASS");
+		string? dbName = Environment.GetEnvironmentVariable("TB_DB_NAME");
+		// fail if missing
+		if (token == null)
+        {
+			throw new Exception("TB_TOKEN unset");
+        }
+		if (dbUser == null)
+		{
+			throw new Exception("TB_DB_USER unset");
 		}
-		//var token = File.ReadAllText("token.txt");
-		//var passwd = File.ReadAllText("passwd");
-		//var uname = File.ReadAllText("uname");
-		var conStr = $"server=localhost;uid={uname};pwd={passwd};database=talkbox";
+		if (dbPass == null)
+		{
+			throw new Exception("TB_DB_PASS unset");
+		}
+		if (dbServer == null)
+        {
+			Console.WriteLine("TB_DB_SERVER unset, assuming localhost.");
+			dbServer = "localhost";
+        }
+		if (dbName == null)
+        {
+			Console.WriteLine("TB_DB_NAME unset, assuming talkbox.");
+			dbName = "talkbox";
+		}
+
+		var conStr = $"server={dbServer};uid={dbUser};pwd={dbPass};database={dbName}";
 		SqlCon = new MySqlConnection();
 		try
 		{

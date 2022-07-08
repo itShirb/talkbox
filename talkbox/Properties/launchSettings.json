@@ -1,0 +1,11 @@
+{
+  "profiles": {
+    "talkbox": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "TB_DB_USER": "root",
+        "TB_DB_PASS": "password"
+      }
+    }
+  }
+}

@@ -181,12 +181,9 @@ public class AudioModule : ModuleBase<SocketCommandContext>
 		}
 		using var response = await TextToSpeech.ApiRequest(Context, text);
 		if (response is null) return;
-		var parsedResponse = JObject.Parse(response.ReadAsStringAsync().Result);
-		var speakUrl = "";
-		foreach (var entry in parsedResponse)
-		{
-			if (entry.Key == "speak_url"&&entry.Value is not null) speakUrl = (string)entry.Value!;
-		}
+		JObject parsedResponse = JObject.Parse(response.ReadAsStringAsync().Result);
+		string? speakUrl = parsedResponse.GetValue("speak_url").Value<string>();
+		
 		Console.WriteLine(speakUrl);
 		await _audioService.SendAudioAsync(Context.Guild, Context.Channel, speakUrl);
 	}
