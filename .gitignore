@@ -4,7 +4,7 @@ obj/
 riderModule.iml
 /_ReSharper.Caches/
 lavalink/
-.vs/
-.idea/
+/.vs/
+/.idea/
 talkbox/Properties/
 talkbox/logs/
