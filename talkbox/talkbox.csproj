@@ -9,6 +9,10 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <None Remove="voicelist" />
+    </ItemGroup>
+
+    <ItemGroup>
       <PackageReference Include="DSharpPlus" Version="4.2.0" />
       <PackageReference Include="DSharpPlus.CommandsNext" Version="4.2.0" />
       <PackageReference Include="DSharpPlus.Lavalink" Version="4.2.0" />
@@ -17,10 +21,16 @@
     </ItemGroup>
 
     <ItemGroup>
+      <Resource Include="voicelist">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </Resource>
+    </ItemGroup>
+
+    <ItemGroup>
       <None Update="Lavalink.jar">
         <CopyToOutputDirectory>Never</CopyToOutputDirectory>
       </None>
-      <None Update="voicelist">
+      <None Update="voicelist.txt">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </None>
     </ItemGroup>
