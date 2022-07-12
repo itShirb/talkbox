@@ -1,8 +1,9 @@
-using DSharpPlus.CommandsNext;
-using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
 using DSharpPlus.Lavalink;
 using DSharpPlus.Lavalink.EventArgs;
+using DSharpPlus.SlashCommands;
+using DSharpPlus.SlashCommands.Attributes;
+using DSharpPlus.SlashCommands.EventArgs;
 using MySql.Data.MySqlClient;
 using Newtonsoft.Json.Linq;
 using System.Diagnostics;
@@ -12,38 +13,41 @@ namespace talkbox;
 
 public class TextToSpeech
 {
-	public static string[] VoiceList;
-	public static string? GetUserVoice(CommandContext ctx)
-	{
-		return (string)Database.CheckExists(1, "user_voice","user_data", "user_id", ctx.User.Id)!;
-	}
-	
-	public static bool SetUserVoice(CommandContext ctx, string voice)
-	{
-		var voiceExists = false;
-		if (VoiceList != null)
-			foreach (var entry in VoiceList)
-			{
-				if (entry == voice) voiceExists = true;
-			}
-		if (!voiceExists) return false;
-		try
-		{
-			if (!(bool)((Database.CheckExists(0, "user_id", "user_data", "user_id", ctx.User.Id)) ?? throw new InvalidOperationException()))
-			{
-				using var dbInsert = new MySqlCommand($"INSERT user_data SET user_id={ctx.User.Id}");
-				dbInsert.Connection = Program.sqlConnection;
-				dbInsert.ExecuteScalar();
-			}
-		}catch(Exception err){Console.WriteLine(err);}
-		using var dbUpdate = new MySqlCommand(
-			$"UPDATE user_data SET user_voice='{voice}' WHERE user_id={ctx.User.Id}");
-		dbUpdate.Connection = Program.sqlConnection;
-		dbUpdate.ExecuteScalar();
-		return true;
-	}
+	public static async Task<List<Database.Users.Voice>> GetVoices()
+    {
+        using (HttpClient c = new())
+        {
+            using (HttpRequestMessage req = new())
+            {
+				req.Method = HttpMethod.Get;
+				req.RequestUri = new Uri("https://texttospeech.googleapis.com/v1/voices?languageCode=en-*");
+				req.Headers.Add("X-Goog-Api-Key", Program.gcpKey);
+                using (HttpResponseMessage r = await c.SendAsync(req))
+                {
+					r.EnsureSuccessStatusCode();
+					JObject res = JObject.Parse(await r.Content.ReadAsStringAsync());
+					List<Database.Users.Voice> voices = new();
+					JArray rawVoices = (JArray)res.GetValue("voices");
+					IEnumerable<JToken> filteredVoices =
+						from vo in rawVoices.Children()
+						where vo["name"].Value<string>().Contains("WaveNet")
+						select vo;
 
-	public static async Task<HttpContent?> ApiRequest(CommandContext ctx, string text)
+					foreach (JToken voice in filteredVoices)
+                    {
+						voices.Add(new(
+								voice["name"].Value<string>(),
+                                voice["languageCodes"][0].Value<string>(),
+								voice["ssmlGender"].Value<string>()
+							));
+                    }
+					return voices;
+				}
+			}
+        }
+    }
+
+	public static async Task<HttpContent?> ApiRequest(InteractionContext ctx, string text)
 	{
 		//" , content
 		var client = new HttpClient();
@@ -54,9 +58,8 @@ public class TextToSpeech
         requestBody["audioConfig"]["sampleRateHertz"] = 48000;
         requestBody["input"] = new JObject();
 		requestBody["input"]["text"] = text;
-		requestBody["voice"] = new JObject();
-		requestBody["voice"]["name"] = "en-GB-WaveNet-A";
-		requestBody["voice"]["languageCode"] = "en-GB";
+		var voice = await Database.Users.GetVoice(ctx.User.Id);
+		requestBody["voice"] = JObject.FromObject(voice);
 #pragma warning restore CS8602 // Dereference of a possibly null reference.
 		var req = new HttpRequestMessage(
 			HttpMethod.Post,
@@ -77,18 +80,16 @@ public class TextToSpeech
 	}
 }
 
-public class AudioModule : BaseCommandModule
+public class AudioModule : ApplicationCommandModule
 {
-	[Command("connect")]
-	[Description("Connect bot to voice channel")]
-	[Aliases("c")]
-	public async Task ConnectCommand(CommandContext ctx)
+	[SlashCommand("connect", "Connect bot to voice channel")]
+	public async Task ConnectCommand(InteractionContext ctx)
 	{
 		// get caller's current voice channel
 		DiscordMember member = ctx.Member;
 		if (member.VoiceState == null)
         {
-            await ctx.RespondAsync("You must be in a voice channel.");
+            await ctx.CreateResponseAsync("You must be in a voice channel.", true);
 			return;
         }
         DiscordChannel channel = member.VoiceState.Channel;
@@ -97,7 +98,7 @@ public class AudioModule : BaseCommandModule
 		LavalinkExtension lava = ctx.Client.GetLavalink();
 		if (!lava.ConnectedNodes.Any())
         {
-			await ctx.RespondAsync("Talkbox is not currently connected to its voice backend.");
+			await ctx.CreateResponseAsync("Talkbox is not currently connected to its voice backend.", true);
 			return;
 		}
 		// connect to node then channel
@@ -105,7 +106,7 @@ public class AudioModule : BaseCommandModule
 		// check if already in channel
 		if (node.GetGuildConnection(ctx.Guild) != null && node.GetGuildConnection(ctx.Guild).Channel == channel)
         {
-			await ctx.RespondAsync("Talkbox is already connected to your channel.");
+			await ctx.CreateResponseAsync("Talkbox is already connected to your channel.", true);
 			return;
 		}
 		Debug.WriteLine(node.IsConnected);
@@ -113,91 +114,78 @@ public class AudioModule : BaseCommandModule
 		LavalinkGuildConnection connecting = await node.ConnectAsync(channel).ConfigureAwait(false);
 		if (connecting.IsConnected)
 		{
-			await ctx.RespondAsync($"Connected to {channel.Mention}");
+			await ctx.CreateResponseAsync($"Connected to {channel.Mention}");
 		} else
         {
-			await ctx.RespondAsync("Failed to connect to channel.");
+			await ctx.CreateResponseAsync("Failed to connect to channel.", true);
 		}
 	}
 	
-	[Command("disconnect")]
-	[Description("Disconnects bot from whatever voice channel it's in.")]
-	[Aliases("dc")]
-	public async Task DisconnectCommand(CommandContext ctx)
+	[SlashCommand("disconnect", "Disconnects bot from whatever voice channel it's in.")]
+	public async Task DisconnectCommand(InteractionContext ctx)
 	{
 		LavalinkExtension lava = ctx.Client.GetLavalink();
 		LavalinkNodeConnection node = lava.GetIdealNodeConnection();
 		LavalinkGuildConnection connection = node.GetGuildConnection(ctx.Guild);
 		if (connection == null)
         {
-			await ctx.RespondAsync("I can't leave a channel that I'm not in!");
+			await ctx.CreateResponseAsync("I can't leave a channel that I'm not in!", true);
         } else
         {
 			await connection.DisconnectAsync();
         }
 	}
 
-	[Command("voicelist")]
-	[Description("Provides a list of available voices")]
-	[Aliases("vl")]
-	public async Task VoiceListCommand(CommandContext ctx)
+	[SlashCommand("voice", "Allows you to change your current TTS voice.")]
+	public async Task VoiceListCommand(InteractionContext ctx)
 	{
-        /* splits list in half, so instead of:
-		 * alice
-		 * bob
-		 * jane
-		 * bill
-		 * 
-		 * you get:
-		 * alice  jane
-		 * bob    bill
+		// defer response so voice listing can take its time
+		await ctx.DeferAsync(true);
+		await ctx.CreateResponseAsync(DSharpPlus.InteractionResponseType.DeferredChannelMessageWithSource,
+			new DiscordInteractionResponseBuilder().WithContent("Working...").AsEphemeral());
+		// list voices
+
+		/* Build a response looking like:
+		 * Select a voice for TTS
+		 * [ English (UK) - Voice A    v]
 		 */
-        try
+		List<DiscordSelectComponentOption> voices = new();
+		var currentVoice = await Database.Users.GetVoice(ctx.User.Id);
+		// icon for ssmlGender
+		DiscordComponentEmoji male = new(DiscordEmoji.FromName(ctx.Client, ":male_sign:"));
+		DiscordComponentEmoji female = new(DiscordEmoji.FromName(ctx.Client, ":female_sign:"));
+		foreach (var voice in await TextToSpeech.GetVoices())
         {
-			DiscordEmbedBuilder embed = new();
-			embed.Title = "Talkbox Voices";
-			var chunks = TextToSpeech.VoiceList.Chunk(TextToSpeech.VoiceList.Length / 3);
-            foreach (var chunk in chunks) // because it's better than figuring out how to index this thing
-            {
-				embed.AddField("** **",
-				String.Join("\n", chunk.ToList()), true);
-			}
-			await ctx.RespondAsync(embed.Build());
-		}
-        catch (Exception e)
-        {
-			Debug.WriteLine(e.Message);
+			voices.Add(new DiscordSelectComponentOption(
+					voice.name,
+					JObject.FromObject(voice).ToString(Newtonsoft.Json.Formatting.None).ToString(),
+					voice.languageCode,
+					voice == currentVoice,
+					voice.ssmlGender == "MALE"?male:female
+				));
         }
-	}
-	
-	[Command("setvoice")]
-	[Description("Sets the voice that TTS will use when you speak")]
-	[Aliases("sv")]
-	public async Task SetVoiceCommand(
-		CommandContext ctx,
-		[Description("Voice to use")] string voice
-		)
-	{
-		if (await Program.db.setVoice(ctx.User.Id, voice))
-        {
-			await ctx.RespondAsync("Set your TTS voice to " + voice);
-        } else {
-			await ctx.RespondAsync("Failed to change your TTS voice");
-        }
+
+		DiscordFollowupMessageBuilder builder = new DiscordFollowupMessageBuilder()
+			.WithContent("You can select a voice here:")
+			.AddComponents(new DiscordSelectComponent(
+					"voiceSelection",
+					"Voices",
+					voices));
+		
+		await ctx.FollowUpAsync(builder);
 	}
 
-	[Command("tts")]
-	[Description("Speaks text in a voice channel")]
-	public async Task TtsAsync(CommandContext ctx, [RemainingText] string text)
+	[SlashCommand("tts", "Speaks text in a voice channel")]
+	public async Task TtsAsync(InteractionContext ctx, [Option("text", "Text to be spoken.")] string text)
 	{
 		if (ctx.Member.Id == 768310054973079592)
         {
-			await ctx.RespondAsync("piss off wyatt");
+			await ctx.CreateResponseAsync("piss off wyatt");
 			return;
         }
 		if (ctx.Member.VoiceState == null)
 		{
-			await ctx.RespondAsync(
+			await ctx.CreateResponseAsync(
 				$"You need to set a voice before you can use tts!\nTo view a list of available voices, run `{Program.defaultPrefix}voicelsit`.\n" +
 				$"To set a voice, run `{Program.defaultPrefix}setvoice [voice]`.");
 			return;
@@ -205,7 +193,7 @@ public class AudioModule : BaseCommandModule
 		using var response = await TextToSpeech.ApiRequest(ctx, text);
 		if (response is null) return;
 		JObject parsedResponse = JObject.Parse(response.ReadAsStringAsync().Result);
-		string path = Path.GetFullPath(ctx.Message.Id.ToString());
+		string path = Path.GetFullPath(ctx.InteractionId.ToString());
 #pragma warning disable CS8604 // Possible null reference argument.
         await File.WriteAllBytesAsync(path, Convert.FromBase64String((string?)parsedResponse.GetValue("audioContent")));
 #pragma warning restore CS8604 // Possible null reference argument.
@@ -215,7 +203,7 @@ public class AudioModule : BaseCommandModule
 		if (guildConnection == null || !guildConnection.IsConnected) await ConnectCommand(ctx);
 		guildConnection = node.GetGuildConnection(ctx.Guild);
 		LavalinkLoadResult loadResult = await guildConnection.GetTracksAsync(path, LavalinkSearchType.Plain);
-		playingTracks.Add(loadResult.Tracks.First().TrackString, ctx.Message.Id);
+		playingTracks.Add(loadResult.Tracks.First().TrackString, ctx.InteractionId);
 		guildConnection.PlaybackFinished += (LavalinkGuildConnection con, TrackFinishEventArgs arg) => new Task(()=>{
 			Debug.WriteLine(playingTracks[arg.Track.TrackString].ToString());
 			File.Delete(Path.GetFullPath(playingTracks[arg.Track.TrackString].ToString()));
