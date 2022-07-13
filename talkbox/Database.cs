@@ -1,4 +1,5 @@
 using MySql.Data.MySqlClient;
+using Newtonsoft.Json;
 using System.Collections;
 using System.Data.Common;
 using System.Linq.Expressions;
@@ -62,17 +63,42 @@ namespace talkbox
         }
         public static class Users
         {
-            public record Voice(string name, string languageCode, string ssmlGender);
+            public class Voice
+            {
+                [JsonProperty(PropertyName = "name")]
+                public string Name { get; set; }
+
+                [JsonProperty(PropertyName = "languageCode")]
+                public string Language { get; set; }
+                
+                [JsonProperty(PropertyName = "ssmlGender")]
+                public string Gender { get; set; }
+
+                [JsonIgnore]
+                public float Rate { get; set; }
+
+                [JsonIgnore]
+                public float Pitch { get; set; }
+
+                public Voice(string name, string languageCode, string ssmlGender, float rate = 1.0f, float pitch = 0.0f)
+                {
+                    Name = name;
+                    Language = languageCode;
+                    Gender = ssmlGender;
+                    Rate = rate;
+                    Pitch = pitch;
+                }
+            }
             public static async Task<Voice> GetVoice(ulong id)
             {
                 using (MySqlCommand cmd = Connection.CreateCommand())
                 {
-                    cmd.CommandText = "SELECT voice_name, voice_lang, voice_gender FROM user_data WHERE user_id = @id";
+                    cmd.CommandText = "SELECT voice_name, voice_lang, voice_gender, voice_rate, voice_pitch FROM user_data WHERE user_id = @id";
                     cmd.Parameters.AddWithValue("@id", id);
                     using (DbDataReader reader = await cmd.ExecuteReaderAsync())
                     {
                         await reader.ReadAsync();
-                        return new Voice(reader.GetString(0), reader.GetString(1), reader.GetString(2));
+                        return new Voice(reader.GetString(0), reader.GetString(1), reader.GetString(2), reader.GetFloat(3), reader.GetFloat(4));
                     }
                 }
             }
@@ -87,10 +113,12 @@ namespace talkbox
                 }
                 using (MySqlCommand cmd = Connection.CreateCommand())
                 {
-                    cmd.CommandText = "INSERT INTO user_data (user_id, voice_name, voice_lang, voice_gender) VALUES(@id, @name, @lang, @gender)";
-                    cmd.Parameters.AddWithValue("@name", voice.name);
-                    cmd.Parameters.AddWithValue("@lang", voice.languageCode);
-                    cmd.Parameters.AddWithValue("@gender", voice.ssmlGender);
+                    cmd.CommandText = "INSERT INTO user_data (user_id, voice_name, voice_lang, voice_gender, voice_rate, voice_pitch) VALUES(@id, @name, @lang, @gender, @rate, @pitch)";
+                    cmd.Parameters.AddWithValue("@name", voice.Name);
+                    cmd.Parameters.AddWithValue("@lang", voice.Language);
+                    cmd.Parameters.AddWithValue("@gender", voice.Gender);
+                    cmd.Parameters.AddWithValue("@rate", voice.Rate);
+                    cmd.Parameters.AddWithValue("@pitch", voice.Pitch);
                     cmd.Parameters.AddWithValue("@id", id);
                     await cmd.ExecuteNonQueryAsync();
                 }

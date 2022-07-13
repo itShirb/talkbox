@@ -97,36 +97,32 @@ internal class Program
 
 		LavalinkExtension lava = client.UseLavalink();
 
-		/*CommandsNextExtension commands = client.UseCommandsNext(new CommandsNextConfiguration()
+		CommandsNextExtension commands = client.UseCommandsNext(new CommandsNextConfiguration()
 		{
 			PrefixResolver = new PrefixResolverDelegate(async (DiscordMessage msg) =>
 				CommandsNextUtilities.GetStringPrefixLength(msg, await Database.Guilds.GetPrefix((ulong)msg.Channel.GuildId))
 			),
 			EnableMentionPrefix = false,
 			EnableDms = false,
-		});*/
-		//commands.CommandErrored += Commands_CommandErrored;
-		SlashCommandsExtension slash = client.UseSlashCommands();
-		slash.RegisterCommands<AudioModule>();
-		slash.SlashCommandErrored += Commands_CommandErrored;
-		
+		});
+		commands.CommandErrored += Commands_CommandErrored;
+		commands.RegisterCommands<AudioModule>();
+		commands.RegisterCommands<AdminModule>();
+
 		await client.ConnectAsync();
-		await slash.RefreshCommands();
 		await lava.ConnectAsync(lavaConf);
 		await Task.Delay(-1);
 	}
 
-    private async Task Commands_CommandErrored(SlashCommandsExtension sender, SlashCommandErrorEventArgs e)
+    private async Task Commands_CommandErrored(CommandsNextExtension sender, CommandErrorEventArgs e)
     {
-		DiscordFollowupMessageBuilder j = new();
 		if (e.Exception.GetType() == typeof(ChecksFailedException))
         {
-			j.Content = "You don't have permission to use that command.";
+			await e.Context.RespondAsync("You don't have permission to use that command.");
         } else
         {
 			
-			j.Content ="**EXC:** ```\n" + e.Exception.ToString() + "```";
+			await e.Context.RespondAsync("**EXC:** ```\n" + e.Exception.ToString() + "```");
 		}
-		await e.Context.FollowUpAsync(j);
 	}
 }
